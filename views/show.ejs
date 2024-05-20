@@ -1,14 +1,49 @@
 <% include ./partials/header.ejs %>
 <div class="w-full min-h-screen bg-zinc-800 px-10 py-8 text-white">
     <div class="cards flex flex-wrap gap-10">
-        <% user.posts.forEach(function(elem){ %>
+        <% user.posts.forEach(function(elem, index){ %>
             <div class="card w-32">
-                <div class=" w-full h-40 bg-sky-200 rounded-lg overflow-hidden">
-                    <img src="/images/uploads/<%= elem.image %>" class="w-full h-full object-cover"  alt="">
+                <div class="image-container relative w-full h-40 bg-sky-200 rounded-lg overflow-hidden">
+                    <img src="/images/uploads/<%= elem.image %>" class="w-full h-full object-cover"  alt="" onclick="expandImage('<%= elem.image %>')">
                 </div>
                 <h5 class="mt-2 text-sm"><%= elem.title %></h5>
+                <h6 class="mt-2 text-sm"><%= elem.description %></h6>
             </div>
         <% }) %>
-</div>
+    </div>
 </div>
 <% include ./partials/footer.ejs %>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet"> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function expandImage(imageUrl) {
+        // Create a modal or expand view to show the clicked image
+        // For example, you can use a modal library like Bootstrap modal
+        // Here's a simple example using Bootstrap modal
+        var modalHtml = `
+            <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <img src="/images/uploads/${imageUrl}" class="w-full" alt="">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Append modal HTML to the body
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Show the modal
+        $('#imageModal').modal('show');
+        
+        // Remove modal from DOM when modal is closed
+        $('#imageModal').on('hidden.bs.modal', function (e) {
+            $(this).remove();
+        });
+    }
+</script>

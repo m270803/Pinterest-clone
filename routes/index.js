@@ -7,6 +7,8 @@ const upload = require('./multer');
 const passport = require('passport'); // Include Passport
 const localStrategy = require('passport-local'); // Include the Local Strategy for Passport
 
+
+
 passport.use(new localStrategy(userModel.authenticate()));
 
 router.get('/', function(req, res, next) {

@@ -5,6 +5,9 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const expressSession = require("express-session");
 const passport = require("passport");
+const profileRoutes = require('./routes/profile'); // Adjust the path as needed
+
+
 
 
 var indexRouter = require('./routes/index');
@@ -21,6 +24,18 @@ app.use(expressSession({
   saveUninitialized: false,
   secret: "hi"
 }));
+
+
+app.post('/update', (req, res) => {
+  const { name, username } = req.body;
+  // Update user in the database (pseudo-code, adjust as needed)
+  User.findByIdAndUpdate(req.user.id, { name, username }, (err, user) => {
+      if (err) {
+          return res.status(500).send('Error updating profile');
+      }
+      res.redirect('./profile'); // Redirect to the profile page
+  });
+});
 
 // Initialize Passport
 app.use(passport.initialize());
@@ -54,5 +69,7 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+app.use(profileRoutes);
 
 module.exports = app;
