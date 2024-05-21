@@ -8,6 +8,7 @@ const passport = require('passport');
 const User = require('./routes/users'); // Ensure you have this import
 const indexRoutes = require('./routes/index');
 const usersRouter = require('./routes/users');
+const likeRoutes = require('./routes/like'); // Import the like routes
 
 const app = express();
 
@@ -34,6 +35,7 @@ passport.deserializeUser(usersRouter.deserializeUser);
 // Routes
 app.use('/', indexRoutes);
 app.use('/users', usersRouter);
+app.use(likeRoutes); // Use the like routes
 
 // Route to update user profile
 app.post('/update', ensureAuthenticated, (req, res) => {
@@ -69,5 +71,16 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+app.get('/some-route', async (req, res) => {
+  try {
+      const posts = await Post.find().populate('user');
+      res.render('your-template', { posts, user: req.user });
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Server Error');
+  }
+});
+
 
 module.exports = app;
