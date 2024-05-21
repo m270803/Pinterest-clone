@@ -12,7 +12,7 @@ function isAuthenticated(req, res, next) {
 }
 
 // Route to handle profile update
-router.post('/updateProfile', isAuthenticated, async (req, res) => {
+router.post('/update', isAuthenticated, async (req, res) => {
     const { name, username } = req.body;
     try {
         // Find the user by their ID and update their name and username

@@ -1,34 +1,52 @@
-var express = require('express');
-var router = express.Router();
-const expressSession = require("express-session")
-const userModel = require("./users");
-const postModel = require("./post");
+const express = require('express');
+const router = express.Router();
+const User = require('./users'); // Correct import path if needed
+const Post = require('./post'); // Correct import path if needed
 const upload = require('./multer');
-const passport = require('passport'); // Include Passport
-const localStrategy = require('passport-local'); // Include the Local Strategy for Passport
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
 
+// Passport configuration
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 
+function isAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.redirect('/login');
+}
 
-passport.use(new localStrategy(userModel.authenticate()));
-
-router.get('/', function(req, res, next) {
-  res.render('index', {nav: false});
+router.post('/update', isAuthenticated, async (req, res) => {
+  const { name, username } = req.body;
+  try {
+    await User.findByIdAndUpdate(req.user._id, { name, username });
+    res.redirect('/profile');
+  } catch (err) {
+    console.error('Error updating profile:', err);
+    res.status(500).send('Error updating profile');
+  }
 });
 
-router.post('/fileupload', isLoggedIn , upload.single("image") , async function(req, res, next) {
-  const user = await userModel.findOne({ username : req.session.passport.user});
+router.get('/', (req, res) => {
+  res.render('index', { nav: false });
+});
+
+router.post('/fileupload', isAuthenticated, upload.single("image"), async (req, res) => {
+  const user = await User.findOne({ username: req.user.username });
   user.profileImage = req.file.filename;
   await user.save();
   res.redirect('/profile');
 });
 
-router.post('/createpost', isLoggedIn , upload.single("postimage") , async function(req, res, next) {
-  const user = await userModel.findOne({ username : req.session.passport.user});
-  const post = await postModel.create({
+router.post('/createpost', isAuthenticated, upload.single("postimage"), async (req, res) => {
+  const user = await User.findOne({ username: req.user.username });
+  const post = await Post.create({
     user: user._id,
     title: req.body.title,
     description: req.body.description,
-    image: req.file.filename
+    image: req.file.filename,
   });
 
   user.posts.push(post._id);
@@ -36,75 +54,60 @@ router.post('/createpost', isLoggedIn , upload.single("postimage") , async funct
   res.redirect("/profile");
 });
 
-router.get('/show/posts', isLoggedIn , async function(req, res, next) {
-  const user = 
-  await userModel
-  .findOne({username: req.session.passport.user})
-  .populate("posts")
-  
-  res.render('show', { user, nav: true});
+router.get('/show/posts', isAuthenticated, async (req, res) => {
+  const user = await User.findOne({ username: req.user.username }).populate("posts");
+  res.render('show', { user, nav: true });
 });
 
-router.get('/feed', isLoggedIn , async function(req, res, next) {
-  const user = 
-  await userModel
-  .findOne({username: req.session.passport.user});
-  const posts = await postModel.find().populate("user")
-  
-  res.render('feed', { user, posts , nav: true});
+router.get('/feed', isAuthenticated, async (req, res) => {
+  const user = await User.findOne({ username: req.user.username });
+  const posts = await Post.find().populate("user");
+  res.render('feed', { user, posts, nav: true });
 });
 
-
-router.get('/add', async function(req, res, next) {
-  const user = await userModel.findOne({username: req.session.passport.user})
-  .populate("posts")
-
-  
-
-  res.render('add', {user,nav: true});
+router.get('/add', isAuthenticated, async (req, res) => {
+  const user = await User.findOne({ username: req.user.username }).populate("posts");
+  res.render('add', { user, nav: true });
 });
 
-router.get('/register', function(req, res, next) {
-  res.render('register' , {nav: false});
+router.get('/register', (req, res) => {
+  res.render('register', { nav: false });
 });
 
-router.post("/register", function(req,res){
-  const {name,username,email,contact} = req.body;
-  const userData = new userModel({name , username, email, contact });
+router.post("/register", (req, res) => {
+  const { name, username, email, contact } = req.body;
+  const userData = new User({ name, username, email, contact });
 
-  userModel.register(userData, req.body.password).then(function(){
-    passport.authenticate("local")(req,res, function(){
+  User.register(userData, req.body.password).then(() => {
+    passport.authenticate("local")(req, res, () => {
       res.redirect("/profile");
-    })
-  })
-})
-
-router.get('/profile', isLoggedIn , async function(req, res, next) {
-  const user = 
-  await userModel
-  .findOne({ username : req.session.passport.user})
-  .populate("posts")
-
-  res.render('profile', { user , nav: true});
+    });
+  }).catch(err => {
+    console.error('Error registering user:', err);
+    res.status(500).send('Error registering user');
+  });
 });
 
-router.post("/login", passport.authenticate("local",{
+router.get('/profile', isAuthenticated, async (req, res) => {
+  const user = await User.findOne({ username: req.user.username }).populate("posts");
+  res.render('profile', { user, nav: true });
+});
+
+router.post("/login", passport.authenticate("local", {
   successRedirect: "/profile",
   failureRedirect: "/"
-}),function(req,res){
-});
+}));
 
-router.get('/logout', function(req, res){
-  req.logout(function(err) {
+router.get('/logout', (req, res) => {
+  req.logout((err) => {
     if (err) { return next(err); }
     res.redirect('/');
   });
 });
 
-function isLoggedIn(req,res,next){
-  if(req.isAuthenticated()) return next();
+function isLoggedIn(req, res, next) {
+  if (req.isAuthenticated()) return next();
   res.redirect("/");
 }
-
 
 module.exports = router;
