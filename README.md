@@ -1,6 +1,6 @@
-🚀 Pinterest Clone Project - Explore and Share Inspirations! 🚀
+🚀 PixSharet - Explore and Share Inspirations! 🚀
 
-I'm excited to introduce my latest project – a Pinterest clone created using JavaScript, Mongoose, and EJS! 🎨📌
+I'm excited to introduce my latest project – e created using JavaScript, Mongoose, and EJS! 🎨📌
 
 Key Features:
 
